@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 自定义对话框风格 -->
+    <style name="commonTipDialogStyle" parent="android:Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFrame">@null</item>
+        <!--无边框 -->
+        <item name="android:windowNoTitle">true</item>
+        <!--没有标题-->
+        <item name="android:windowIsFloating">true</item>
+        <!--是否浮在activity之上-->
+        <item name="android:windowIsTranslucent">false</item>
+        <!--背景是否半透明-->
+        <item name="android:windowContentOverlay">@null</item>
+        <!--对话框是否有遮盖 -->
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <!--动画样式-->
+        <item name="android:backgroundDimEnabled">false</item>
+        <!--背景是否模糊-->
+
+    </style>
+
+    <style name="TransparentDialogStyle" parent="commonTipDialogStyle">
+        <!-- 是否浮在activity之上 -->
+        <item name="android:windowIsFloating">false</item>
+        <!-- 设置自定义布局的背景半透明 -->
+        <item name="android:background">#50000000</item>
+        <!--<item name="android:windowBackground">@android:color/transparent</item>-->
+    </style>
+
+    <style name="dialogWindowAnim" mce_bogus="1" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/finger_print_fade_in</item>
+        <item name="android:windowExitAnimation">@anim/finger_print_fade_out</item>
+    </style>
+</resources>
