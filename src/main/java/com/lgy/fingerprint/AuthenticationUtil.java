@@ -2,9 +2,13 @@ package com.lgy.fingerprint;
 
 import android.content.Context;
 
+import com.lgy.fingerprint.model.FingerprintBean;
 import com.lgy.fingerprint.model.FingerprintData;
 import com.lgy.fingerprint.util.FingerprintUtil;
+import com.lgy.fingerprint.util.JsonUtils;
 import com.lgy.fingerprint.util.SPUtil;
+
+import java.nio.charset.StandardCharsets;
 
 public class AuthenticationUtil {
     private static final String FINGERPRINT_SECURE_KEY_SP = "FingerprintSecureKeySp";
@@ -30,7 +34,6 @@ public class AuthenticationUtil {
     public AuthenticationUtil setAuthenticateAction(IAuthenticateAction authenticateAction) {
         this.authenticateAction = authenticateAction;
         this.authenticateAction.init(context);
-
         return this;
     }
 
@@ -41,12 +44,23 @@ public class AuthenticationUtil {
         return -3;
     }
 
-    public void authenticate(AuthenticationCallback callback, String secretData){
+    public void setSecretMessage(String secretMessage) throws Exception {
+        if (authenticateAction == null) {
+            throw new Exception("beforre call method setSecretMessage, must init authenticateAction !");
+        }
+        authenticateAction.setSecretMessage(secretMessage);
+    }
+
+    public void authenticate(){
         if (authenticateAction != null) {
-            authenticateAction.setAuthenticationCallback(callback);
-            authenticateAction.setSecretMessage(secretData);
             authenticateAction.authenticate();
 
+        }
+    }
+
+    public void setCallBack(AuthenticationCallback callback){
+        if (authenticateAction != null) {
+            authenticateAction.setAuthenticationCallback(callback);
         }
     }
 

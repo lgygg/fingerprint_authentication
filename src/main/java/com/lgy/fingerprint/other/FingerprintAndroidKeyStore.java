@@ -5,6 +5,9 @@ import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
+
+import androidx.biometric.BiometricPrompt;
+
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 
@@ -23,11 +26,11 @@ import javax.crypto.spec.IvParameterSpec;
  */
 public class FingerprintAndroidKeyStore {
 
-    private KeyStore mStore;
+    protected KeyStore mStore;
     //不可修改
     private final static String KEY_STORE = "AndroidKeyStore";
     //加密方式
-    private String transformation = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC
+    protected String transformation = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC
             + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7;
     public FingerprintAndroidKeyStore() {
         try {

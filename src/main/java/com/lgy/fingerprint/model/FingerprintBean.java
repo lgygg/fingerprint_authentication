@@ -1,22 +1,25 @@
 package com.lgy.fingerprint.model;
 
+import com.lgy.fingerprint.util.JsonUtils;
+
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 指纹信息
  */
 public class FingerprintBean implements Serializable {
 
-    private long mDeviceId;
+    private String mDeviceId;
     private long mFingerId;
     private long mGroupId;
     private String mName;
 
-    public long getDeviceId() {
+    public String getDeviceId() {
         return mDeviceId;
     }
 
-    public void setDeviceId(long mDeviceId) {
+    public void setDeviceId(String mDeviceId) {
         this.mDeviceId = mDeviceId;
     }
 
@@ -65,7 +68,7 @@ public class FingerprintBean implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (int) (mDeviceId ^ (mDeviceId >>> 32));
+        result = prime * result + ((mDeviceId == null) ? 0 : mDeviceId.hashCode());
         result = prime * result + (int) (mFingerId ^ (mFingerId >>> 32));
         result = prime * result + (int) (mGroupId ^ (mGroupId >>> 32));
         result = prime * result + ((mName == null) ? 0 : mName.hashCode());
@@ -75,8 +78,8 @@ public class FingerprintBean implements Serializable {
     @Override
     public String toString() {
         return "FingerprintBean{" +
-                "mDeviceId=" + mDeviceId +
-                ", mFingerId=" + mFingerId +
+                "mDeviceId='" + mDeviceId +
+                "', mFingerId=" + mFingerId +
                 ", mGroupId=" + mGroupId +
                 ", mName='" + mName + '\'' +
                 '}';

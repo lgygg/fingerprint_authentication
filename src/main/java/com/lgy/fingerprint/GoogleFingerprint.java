@@ -15,6 +15,8 @@ import com.lgy.fingerprint.model.SecureKeyData;
 import com.lgy.fingerprint.other.FingerprintAndroidKeyStore;
 import com.lgy.fingerprint.util.FingerprintUtil;
 
+import java.nio.charset.StandardCharsets;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -30,6 +32,8 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
     private CancellationSignal mCancellationSignal;
     private SecureKeyData secureKeyData;
     private FingerprintAndroidKeyStore mLocalAndroidKeyStore;
+    //别名，KeyStore通过别名查找到android密码库里存储的密钥
+    private String keyAlias = "";
 
     /**
      * isFingerprintAvailable
@@ -65,7 +69,7 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
 
     private void generateKey() {
         //在keystore中生成加密密钥
-        mLocalAndroidKeyStore.generateKey(secureKeyData.getSecretData(),true,true);
+        mLocalAndroidKeyStore.generateKey(this.keyAlias,true,true);
     }
 
     public void authenticate(){
@@ -79,14 +83,14 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
         if (FingerprintData.getFingerprintOpened()) {
             //解密
             String iv = secureKeyData.getIV();
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(secureKeyData.getSecretData(),Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE));
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.keyAlias,Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE));
             if (cryptoObject == null) {
                 return;
             }
         }else {
             generateKey();
             //加密
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(secureKeyData.getSecretData(),Cipher.ENCRYPT_MODE, null);
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.keyAlias,Cipher.ENCRYPT_MODE, null);
         }
 
 
@@ -98,13 +102,13 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void setSecretMessage(String secretData) {
-        secureKeyData.setSecretData(secretData);
+        this.keyAlias = secretData;
     }
 
     @Override
     public void closeAuthenticate() {
         if (mLocalAndroidKeyStore != null) {
-            mLocalAndroidKeyStore.clean(secureKeyData.getSecretData());
+            mLocalAndroidKeyStore.clean(this.keyAlias);
         }
         if (secureKeyData != null) {
             secureKeyData.setIV("");
@@ -161,8 +165,11 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
                 return;
             }
             try {
+                Log.d("hagan", "before Decrypted data is:\n" + data + "\n");
                 byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
-                Log.d("lgy", "Decrypted data is:\n" + Base64.encodeToString(decrypted, Base64.URL_SAFE) + "\n");
+
+//                byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
+//                Log.d("hagan", "Decrypted data is:\n" + Base64.encodeToString(decrypted, Base64.URL_SAFE) + "\n");
 
                 authenticationCallback.onAuthenticationSucceeded(new String(decrypted));
             } catch (BadPaddingException | IllegalBlockSizeException e) {
@@ -172,25 +179,21 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
         } else {
             //加密
             try {
-                if (!TextUtils.isEmpty(secureKeyData.getSecretData())) {
-                    byte[] encrypted = cipher.doFinal(secureKeyData.getSecretData().getBytes());
-                    byte[] IV = cipher.getIV();
-                    String se = Base64.encodeToString(encrypted, Base64.URL_SAFE);
-                    String siv = Base64.encodeToString(IV, Base64.URL_SAFE);
-                    if (secureKeyData.setSecretData(se)&&secureKeyData.setIV(siv)) {
-                        authenticationCallback.onAuthenticationSucceeded(se);
-                        FingerprintData.setFingerprintOpened(true);
-                    } else {
-                        authenticationCallback.onAuthenticationFailed();
-                    }
+                byte[] encrypted = cipher.doFinal(this.keyAlias.getBytes());
+                byte[] IV = cipher.getIV();
+                String se = Base64.encodeToString(encrypted, Base64.URL_SAFE);
+                String siv = Base64.encodeToString(IV, Base64.URL_SAFE);
+                Log.d("hagan", "encrypt: se->\n" + se + "\nsiv:"+siv);
+                if (secureKeyData.setSecretData(se)&&secureKeyData.setIV(siv)) {
+                    authenticationCallback.onAuthenticationSucceeded(se);
+                    FingerprintData.setFingerprintOpened(true);
+                } else {
+                    authenticationCallback.onAuthenticationFailed();
                 }
             } catch (BadPaddingException | IllegalBlockSizeException e) {
                 e.printStackTrace();
                 authenticationCallback.onAuthenticationFailed();
             }
-        }
-        if (authenticationCallback != null) {
-            authenticationCallback.onAuthenticationSucceeded(secureKeyData.getSecretData());
         }
     }
 
