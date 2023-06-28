@@ -125,7 +125,7 @@ class GoogleFingerprintAPI28 : IAuthenticateAction<FingerprintBean>, BiometricPr
             }
             try {
                 val decrypted = cipher!!.doFinal(Base64.decode(data, Base64.URL_SAFE))
-                Log.d("lgy", "Decrypted data is:${Base64.encodeToString(decrypted, Base64.URL_SAFE)}")
+                Log.d("lgygg", "Decrypted data is:${Base64.encodeToString(decrypted, Base64.URL_SAFE)}")
                 authenticationCallback!!.onAuthenticationSucceeded(Base64.encodeToString(decrypted, Base64.URL_SAFE))
             } catch (e: BadPaddingException) {
                 e.printStackTrace()

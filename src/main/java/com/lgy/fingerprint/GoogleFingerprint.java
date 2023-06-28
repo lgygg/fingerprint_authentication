@@ -1,11 +1,10 @@
 package com.lgy.fingerprint;
 
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 
 import android.os.CancellationSignal;
-import android.security.keystore.KeyProperties;
+
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -14,9 +13,6 @@ import com.lgy.fingerprint.model.FingerprintBean;
 import com.lgy.fingerprint.model.FingerprintData;
 import com.lgy.fingerprint.model.SecureKeyData;
 import com.lgy.fingerprint.other.FingerprintAndroidKeyStore;
-import com.lgy.fingerprint.util.FingerprintUtil;
-
-import java.nio.charset.StandardCharsets;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -33,7 +29,6 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
     private CancellationSignal mCancellationSignal;
     private SecureKeyData secureKeyData;
     private FingerprintAndroidKeyStore mLocalAndroidKeyStore;
-    //别名，KeyStore通过别名查找到android密码库里存储的密钥
     private FingerprintBean fingerprintBean;
 
     /**
@@ -166,11 +161,9 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
                 return;
             }
             try {
-                Log.d("hagan", "before Decrypted data is:\n" + data + "\n");
+                Log.d("lgygg", "before Decrypted data is:\n" + data + "\n");
                 byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
-
-//                byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
-//                Log.d("hagan", "Decrypted data is:\n" + Base64.encodeToString(decrypted, Base64.URL_SAFE) + "\n");
+                Log.d("lgygg", "Decrypted data is:\n" + Base64.encodeToString(decrypted, Base64.URL_SAFE) + "\n");
 
                 authenticationCallback.onAuthenticationSucceeded(new String(decrypted));
             } catch (BadPaddingException | IllegalBlockSizeException e) {
@@ -184,7 +177,7 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
                 byte[] IV = cipher.getIV();
                 String se = Base64.encodeToString(encrypted, Base64.URL_SAFE);
                 String siv = Base64.encodeToString(IV, Base64.URL_SAFE);
-                Log.d("hagan", "encrypt: se->\n" + se + "\nsiv:"+siv);
+                Log.d("lgygg", "encrypt: se->\n" + se + "\nsiv:"+siv);
                 if (secureKeyData.setSecretData(se)&&secureKeyData.setIV(siv)) {
                     authenticationCallback.onAuthenticationSucceeded(se);
                     FingerprintData.setFingerprintOpened(true);

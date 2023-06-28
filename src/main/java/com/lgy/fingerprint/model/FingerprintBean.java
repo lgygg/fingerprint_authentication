@@ -10,6 +10,7 @@ public class FingerprintBean implements Serializable {
     private String mDeviceId;
     private long mFingerId;
     private long mGroupId;
+    //待加密的数据
     private String secretData;
     //别名，KeyStore通过别名查找到android密码库里存储的密钥
     private String keyAlias;

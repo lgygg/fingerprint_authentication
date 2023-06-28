@@ -1,20 +1,9 @@
 package com.lgy.fingerprint.other;
 
-import android.hardware.fingerprint.FingerprintManager;
-import android.os.Build;
-import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
-
 import androidx.biometric.BiometricPrompt;
-
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 
 /**
