@@ -9,6 +9,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import com.lgy.fingerprint.model.FingerprintBean
 import com.lgy.fingerprint.model.FingerprintData
 import com.lgy.fingerprint.model.SecureKeyData
 import com.lgy.fingerprint.other.FingerprintPAndroidKeyStore
@@ -21,7 +22,7 @@ import javax.crypto.IllegalBlockSizeException
  * @author: Administrator
  * @date: 2023/6/27
  */
-class GoogleFingerprintAPI28 : IAuthenticateAction, BiometricPrompt.AuthenticationCallback() {
+class GoogleFingerprintAPI28 : IAuthenticateAction<FingerprintBean>, BiometricPrompt.AuthenticationCallback() {
 
     private lateinit var manager: BiometricManager
     private var authenticationCallback: AuthenticationCallback? = null
@@ -30,7 +31,7 @@ class GoogleFingerprintAPI28 : IAuthenticateAction, BiometricPrompt.Authenticati
     private lateinit var mLocalAndroidKeyStore: FingerprintPAndroidKeyStore
 
     //别名，KeyStore通过别名查找到android密码库里存储的密钥
-    private var keyAlias: String? = null
+    private var fingerprintBean: FingerprintBean? = null
     override fun isFingerprintAvailable(): Int {
         when(manager.canAuthenticate()){
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> return IAuthenticateAction.NO_HARDWARE_DETACTED
@@ -62,7 +63,7 @@ class GoogleFingerprintAPI28 : IAuthenticateAction, BiometricPrompt.Authenticati
 
     private fun generateKey() {
         //在keystore中生成加密密钥
-        mLocalAndroidKeyStore.generateKey(this.keyAlias, true, true)
+        mLocalAndroidKeyStore.generateKey(this.fingerprintBean!!.keyAlias, true, true)
     }
 
     override fun authenticate() {
@@ -74,26 +75,27 @@ class GoogleFingerprintAPI28 : IAuthenticateAction, BiometricPrompt.Authenticati
         if (FingerprintData.getFingerprintOpened()) {
             //解密
             val iv = secureKeyData!!.iv
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObjectP(this.keyAlias, Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE))
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObjectP(this.fingerprintBean!!.keyAlias, Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE))
             if (cryptoObject == null) {
                 return
             }
         } else {
             generateKey()
             //加密
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObjectP(this.keyAlias, Cipher.ENCRYPT_MODE, null)
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObjectP(this.fingerprintBean!!.keyAlias, Cipher.ENCRYPT_MODE, null)
         }
         val promptInfo: BiometricPrompt.PromptInfo = createUI()
         prompt.authenticate(promptInfo,cryptoObject)
     }
 
-    override fun setSecretMessage(secretData: String?) {
-        keyAlias = secretData
+    override fun setSecretMessage(secretData: FingerprintBean?) {
+        fingerprintBean = secretData
+
     }
 
     override fun closeAuthenticate() {
         if (mLocalAndroidKeyStore != null) {
-            mLocalAndroidKeyStore.clean(this.keyAlias)
+            mLocalAndroidKeyStore.clean(this.fingerprintBean!!.keyAlias)
         }
         if (secureKeyData != null) {
             secureKeyData!!.iv = ""
@@ -135,7 +137,7 @@ class GoogleFingerprintAPI28 : IAuthenticateAction, BiometricPrompt.Authenticati
         } else {
             //加密
             try {
-                val encrypted = cipher!!.doFinal(keyAlias!!.toByteArray())
+                val encrypted = cipher!!.doFinal(fingerprintBean?.secretData!!.toByteArray())
                 val IV = cipher!!.iv
                 val se = Base64.encodeToString(encrypted, Base64.URL_SAFE)
                 val siv = Base64.encodeToString(IV, Base64.URL_SAFE)

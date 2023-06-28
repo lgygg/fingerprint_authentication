@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
+import com.lgy.fingerprint.model.FingerprintBean;
 import com.lgy.fingerprint.model.FingerprintData;
 import com.lgy.fingerprint.model.SecureKeyData;
 import com.lgy.fingerprint.other.FingerprintAndroidKeyStore;
@@ -24,7 +25,7 @@ import javax.crypto.IllegalBlockSizeException;
 /**
  * 1.判断是否支持指纹验证
  */
-public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback implements IAuthenticateAction{
+public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback implements IAuthenticateAction<FingerprintBean>{
 
     private FingerprintManager mManager;
 //    private KeyguardManager keyguardManager;
@@ -33,7 +34,7 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
     private SecureKeyData secureKeyData;
     private FingerprintAndroidKeyStore mLocalAndroidKeyStore;
     //别名，KeyStore通过别名查找到android密码库里存储的密钥
-    private String keyAlias = "";
+    private FingerprintBean fingerprintBean;
 
     /**
      * isFingerprintAvailable
@@ -69,7 +70,7 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
 
     private void generateKey() {
         //在keystore中生成加密密钥
-        mLocalAndroidKeyStore.generateKey(this.keyAlias,true,true);
+        mLocalAndroidKeyStore.generateKey(this.fingerprintBean.getKeyAlias(),true,true);
     }
 
     public void authenticate(){
@@ -83,14 +84,14 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
         if (FingerprintData.getFingerprintOpened()) {
             //解密
             String iv = secureKeyData.getIV();
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.keyAlias,Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE));
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.fingerprintBean.getKeyAlias(),Cipher.DECRYPT_MODE, Base64.decode(iv, Base64.URL_SAFE));
             if (cryptoObject == null) {
                 return;
             }
         }else {
             generateKey();
             //加密
-            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.keyAlias,Cipher.ENCRYPT_MODE, null);
+            cryptoObject = mLocalAndroidKeyStore.getCryptoObject(this.fingerprintBean.getKeyAlias(),Cipher.ENCRYPT_MODE, null);
         }
 
 
@@ -101,14 +102,14 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
     }
 
     @Override
-    public void setSecretMessage(String secretData) {
-        this.keyAlias = secretData;
+    public void setSecretMessage(FingerprintBean bean) {
+        this.fingerprintBean = bean;
     }
 
     @Override
     public void closeAuthenticate() {
         if (mLocalAndroidKeyStore != null) {
-            mLocalAndroidKeyStore.clean(this.keyAlias);
+            mLocalAndroidKeyStore.clean(this.fingerprintBean.getKeyAlias());
         }
         if (secureKeyData != null) {
             secureKeyData.setIV("");
@@ -179,7 +180,7 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
         } else {
             //加密
             try {
-                byte[] encrypted = cipher.doFinal(this.keyAlias.getBytes());
+                byte[] encrypted = cipher.doFinal(this.fingerprintBean.getSecretData().getBytes());
                 byte[] IV = cipher.getIV();
                 String se = Base64.encodeToString(encrypted, Base64.URL_SAFE);
                 String siv = Base64.encodeToString(IV, Base64.URL_SAFE);

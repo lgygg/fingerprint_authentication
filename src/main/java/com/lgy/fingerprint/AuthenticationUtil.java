@@ -44,7 +44,7 @@ public class AuthenticationUtil {
         return -3;
     }
 
-    public void setSecretMessage(String secretMessage) throws Exception {
+    public void setSecretMessage(FingerprintBean secretMessage) throws Exception {
         if (authenticateAction == null) {
             throw new Exception("beforre call method setSecretMessage, must init authenticateAction !");
         }

@@ -1,9 +1,6 @@
 package com.lgy.fingerprint.model;
 
-import com.lgy.fingerprint.util.JsonUtils;
-
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 指纹信息
@@ -13,7 +10,9 @@ public class FingerprintBean implements Serializable {
     private String mDeviceId;
     private long mFingerId;
     private long mGroupId;
-    private String mName;
+    private String secretData;
+    //别名，KeyStore通过别名查找到android密码库里存储的密钥
+    private String keyAlias;
 
     public String getDeviceId() {
         return mDeviceId;
@@ -39,14 +38,21 @@ public class FingerprintBean implements Serializable {
         this.mGroupId = mGroupId;
     }
 
-    public String getName() {
-        return mName;
+    public String getSecretData() {
+        return secretData;
     }
 
-    public void setName(String mName) {
-        this.mName = mName;
+    public void setSecretData(String mName) {
+        this.secretData = mName;
     }
 
+    public void setKeyAlias(String keyAlias) {
+        this.keyAlias = keyAlias;
+    }
+
+    public String getKeyAlias() {
+        return keyAlias;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -71,7 +77,8 @@ public class FingerprintBean implements Serializable {
         result = prime * result + ((mDeviceId == null) ? 0 : mDeviceId.hashCode());
         result = prime * result + (int) (mFingerId ^ (mFingerId >>> 32));
         result = prime * result + (int) (mGroupId ^ (mGroupId >>> 32));
-        result = prime * result + ((mName == null) ? 0 : mName.hashCode());
+        result = prime * result + ((secretData == null) ? 0 : secretData.hashCode());
+        result = prime * result + ((keyAlias == null) ? 0 : keyAlias.hashCode());
         return result;
     }
 
@@ -81,7 +88,8 @@ public class FingerprintBean implements Serializable {
                 "mDeviceId='" + mDeviceId +
                 "', mFingerId=" + mFingerId +
                 ", mGroupId=" + mGroupId +
-                ", mName='" + mName + '\'' +
+                ", secretData='" + secretData +
+                "', mName='" + keyAlias + '\'' +
                 '}';
     }
 }

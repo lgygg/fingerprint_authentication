@@ -5,7 +5,7 @@ import android.content.Context;
 /**
  * 验证过程
  */
-public interface IAuthenticateAction {
+public interface IAuthenticateAction<T> {
     /**
      * 设备不支持指纹识别
      */
@@ -29,6 +29,6 @@ public interface IAuthenticateAction {
     void setAuthenticationCallback(AuthenticationCallback authenticationCallback);
     void stopAuthenticate();
     void authenticate();
-    void setSecretMessage(String secretData);
+    void setSecretMessage(T secretData);
     void closeAuthenticate();
 }
