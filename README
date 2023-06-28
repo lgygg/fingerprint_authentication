@@ -49,3 +49,268 @@ Android 还可以为应用程序开发者提供保护，确保在正确识别用
 当用户激活他们的指纹读取器时，实际上他们是在解锁一个由硬件支持的加密保险库。作为开发者，您可以根据应用程序的需求来选择在该保险库中存储哪些类型的关键资料
 ![avatar](E:\AndroidStudioProject\Camera2Basic\fingerprint_authentication\picture\fingerprint.png)
 
+
+# 例子
+```java
+package com.lgy.testfingerprint;
+
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.lgy.fingerprint.Authenticate;
+import com.lgy.fingerprint.AuthenticationCallback;
+import com.lgy.fingerprint.GoogleFingerprint;
+import com.lgy.fingerprint.GoogleFingerprintAPI28;
+import com.lgy.fingerprint.IAuthenticateAction;
+import com.lgy.fingerprint.model.FingerprintBean;
+import com.lgy.fingerprint.model.FingerprintData;
+import com.lgy.fingerprint.view.CommonTipDialog;
+import com.lgy.fingerprint.view.FingerprintVerifyDialog;
+
+import static com.lgy.fingerprint.GoogleFingerprint.FINGERPRINT_AVAILABLE;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+
+public class TestFingerprintActivity extends AppCompatActivity implements AuthenticationCallback, View.OnClickListener {
+
+    private ImageView iv_fingerprint_login_switch;
+    private TextView tv_nonsupport;
+    private CommonTipDialog openFingerprintLoginTipDialog;
+    private FingerprintVerifyDialog fingerprintVerifyDialog;
+    private CommonTipDialog fingerprintVerifyErrorTipDialog;
+    private CommonTipDialog closeFingerprintTipDialog;
+    private boolean isOpen;
+
+    private Authenticate authenticate;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fingerprint_layout);
+        iv_fingerprint_login_switch = (ImageView) findViewById(R.id.iv_fingerprint_login_switch);
+        tv_nonsupport = (TextView) findViewById(R.id.tv_nonsupport);
+        iv_fingerprint_login_switch.setOnClickListener(this);
+
+//        IAuthenticateAction helper = new GoogleFingerprint();
+        IAuthenticateAction helper = new GoogleFingerprintAPI28();
+        authenticate = new Authenticate.Builder()
+                .buildContext(this)
+                .buildAuthenticateAction(helper).build();
+        isOpen = FingerprintData.getFingerprintOpened();
+        authenticate.setCallBack(this);
+
+        if (helper.isFingerprintAvailable() == FINGERPRINT_AVAILABLE) {
+            //设备支持指纹登录
+            tv_nonsupport.setVisibility(View.INVISIBLE);
+            iv_fingerprint_login_switch.setEnabled(true);
+            if (authenticate.isFingerprintOpened()) {
+                new Handler(getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        openFingerprintLogin();
+                    }
+                },1000);
+            }
+
+
+        } else {
+            //设备不支持指纹登录
+            tv_nonsupport.setVisibility(View.VISIBLE);
+            iv_fingerprint_login_switch.setEnabled(false);
+        }
+
+        setSwitchStatus();
+
+        tv_nonsupport.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (helper.isFingerprintAvailable() == FINGERPRINT_AVAILABLE &&
+                        !isOpen) {
+                    showOpenFingerprintLoginDialog();
+                }
+            }
+        }, 500);
+    }
+
+
+    private void showOpenFingerprintLoginDialog() {
+        if (openFingerprintLoginTipDialog == null) {
+            openFingerprintLoginTipDialog = new CommonTipDialog(TestFingerprintActivity.this);
+        }
+        openFingerprintLoginTipDialog.setSingleButton(false);
+        openFingerprintLoginTipDialog.setContentText("您的设备支持指纹登录,是否现在开启?");
+        openFingerprintLoginTipDialog.setOnDialogButtonsClickListener(new CommonTipDialog.OnDialogButtonsClickListener() {
+            @Override
+            public void onCancelClick(View v) {
+
+            }
+
+            @Override
+            public void onConfirmClick(View v) {
+                openFingerprintLogin();
+            }
+        });
+        openFingerprintLoginTipDialog.show();
+    }
+
+    /**
+     * @description 开启指纹登录功能
+     * @author lgygg
+     */
+    private void openFingerprintLogin() {
+        Log.e("lgygg", "openFingerprintLogin");
+
+        if (fingerprintVerifyDialog == null) {
+            fingerprintVerifyDialog = new FingerprintVerifyDialog(this);
+        }
+        fingerprintVerifyDialog.setContentText("请验证指纹");
+        fingerprintVerifyDialog.setOnCancelButtonClickListener(new FingerprintVerifyDialog.OnDialogCancelButtonClickListener() {
+            @Override
+            public void onCancelClick(View v) {
+                authenticate.stopAuthenticate();
+            }
+        });
+//        fingerprintVerifyDialog.show();
+        //
+        try {
+            FingerprintBean bean = new FingerprintBean();
+            bean.setKeyAlias("lgy");
+            bean.setSecretData("liangguiyu+123456");
+            authenticate.setSecretMessage(bean);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        authenticate.authenticate();
+    }
+
+
+    private void saveLocalFingerprintInfo() {
+    }
+
+    @Override
+    public void onAuthenticationFailed() {
+        Log.e("lgygg", "HomeActivity->onAuthenticationFail");
+        showFingerprintVerifyErrorInfo("指纹不匹配");
+    }
+
+    @Override
+    public void onAuthenticationError(int errorCode, CharSequence errString) {
+        Log.e("lgygg", "HomeActivity->onAuthenticationError-> errorCode:" + errorCode + ",errString:" + errString);
+        if (fingerprintVerifyDialog != null && fingerprintVerifyDialog.isShowing()) {
+            fingerprintVerifyDialog.dismiss();
+        }
+        showTipDialog(errorCode, errString.toString());
+
+    }
+
+    @Override
+    public void onAuthenticationCancelled() {
+
+    }
+
+    private void showTipDialog(int errorCode, CharSequence errString) {
+        if (fingerprintVerifyErrorTipDialog == null) {
+            fingerprintVerifyErrorTipDialog = new CommonTipDialog(this);
+        }
+        fingerprintVerifyErrorTipDialog.setContentText("errorCode:" + errorCode + "," + errString);
+        fingerprintVerifyErrorTipDialog.setSingleButton(true);
+        fingerprintVerifyErrorTipDialog.setOnSingleConfirmButtonClickListener(new CommonTipDialog.OnDialogSingleConfirmButtonClickListener() {
+            @Override
+            public void onConfirmClick(View v) {
+                authenticate.stopAuthenticate();
+            }
+        });
+        fingerprintVerifyErrorTipDialog.show();
+    }
+
+
+    @Override
+    public void onStartAuthentication() {
+
+    }
+
+    @Override
+    public void onAuthenticationSucceeded(String sercet) {
+        Log.e("lgygg", "sercet->"+sercet);
+        if (fingerprintVerifyDialog != null && fingerprintVerifyDialog.isShowing()) {
+            fingerprintVerifyDialog.dismiss();
+            Toast.makeText(this, "指纹登录已开启", Toast.LENGTH_SHORT).show();
+            isOpen = true;
+            setSwitchStatus();
+            saveLocalFingerprintInfo();
+        }
+    }
+
+    @Override
+    public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
+        Log.e("lgygg", "HomeActivity->onAuthenticationHelp-> helpCode:" + helpCode + ",helpString:" + helpString);
+        showFingerprintVerifyErrorInfo(helpString.toString());
+    }
+
+    private void showFingerprintVerifyErrorInfo(String info) {
+        if (fingerprintVerifyDialog != null && fingerprintVerifyDialog.isShowing()) {
+            fingerprintVerifyDialog.setContentText(info);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.iv_fingerprint_login_switch:
+                dealOnOff(isOpen);
+                break;
+        }
+    }
+
+    private void dealOnOff(boolean isOpen) {
+        if (isOpen) {
+            showCloseFingerprintTipDialog();
+        } else {
+            openFingerprintLogin();
+        }
+    }
+
+    private void showCloseFingerprintTipDialog() {
+        if (closeFingerprintTipDialog == null) {
+            closeFingerprintTipDialog = new CommonTipDialog(this);
+        }
+        closeFingerprintTipDialog.setContentText("确定关闭指纹登录?");
+        closeFingerprintTipDialog.setSingleButton(false);
+        closeFingerprintTipDialog.setOnDialogButtonsClickListener(new CommonTipDialog.OnDialogButtonsClickListener() {
+            @Override
+            public void onCancelClick(View v) {
+
+            }
+
+            @Override
+            public void onConfirmClick(View v) {
+                closeFingerprintLogin();
+            }
+        });
+        closeFingerprintTipDialog.show();
+    }
+
+    /**
+     * @description 关闭指纹登录功能
+     * @author lgygg
+     */
+    private void closeFingerprintLogin() {
+        isOpen = false;
+        setSwitchStatus();
+        authenticate.closeAuthenticate();
+    }
+
+    private void setSwitchStatus() {
+        iv_fingerprint_login_switch.setImageResource(isOpen ? R.drawable.switch_open_icon : R.drawable.switch_close_icon);
+    }
+}
+
+```
+
