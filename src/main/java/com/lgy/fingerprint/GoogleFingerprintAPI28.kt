@@ -13,6 +13,8 @@ import com.lgy.fingerprint.model.FingerprintBean
 import com.lgy.fingerprint.model.FingerprintData
 import com.lgy.fingerprint.model.SecureKeyData
 import com.lgy.fingerprint.other.FingerprintPAndroidKeyStore
+import com.lgy.fingerprint.util.FingerprintUtil
+import com.lgy.fingerprint.util.SPUtil
 import javax.crypto.BadPaddingException
 import javax.crypto.Cipher
 import javax.crypto.IllegalBlockSizeException
@@ -127,6 +129,8 @@ class GoogleFingerprintAPI28 : IAuthenticateAction<FingerprintBean>, BiometricPr
                 val decrypted = cipher!!.doFinal(Base64.decode(data, Base64.URL_SAFE))
                 Log.d("lgygg", "Decrypted data is:${Base64.encodeToString(decrypted, Base64.URL_SAFE)}")
                 authenticationCallback!!.onAuthenticationSucceeded(Base64.encodeToString(decrypted, Base64.URL_SAFE))
+                SPUtil.getInstance().putString(FingerprintData.LOCAL_FINGERPRINT_INFO, FingerprintUtil.getFingerprintInfoString(SPUtil.getInstance().mContext))
+
             } catch (e: BadPaddingException) {
                 e.printStackTrace()
                 authenticationCallback!!.onAuthenticationFailed()

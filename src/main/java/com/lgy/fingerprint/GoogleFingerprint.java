@@ -13,6 +13,8 @@ import com.lgy.fingerprint.model.FingerprintBean;
 import com.lgy.fingerprint.model.FingerprintData;
 import com.lgy.fingerprint.model.SecureKeyData;
 import com.lgy.fingerprint.other.FingerprintAndroidKeyStore;
+import com.lgy.fingerprint.util.FingerprintUtil;
+import com.lgy.fingerprint.util.SPUtil;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -166,6 +168,8 @@ public class GoogleFingerprint extends FingerprintManager.AuthenticationCallback
                 Log.d("lgygg", "Decrypted data is:\n" + Base64.encodeToString(decrypted, Base64.URL_SAFE) + "\n");
 
                 authenticationCallback.onAuthenticationSucceeded(new String(decrypted));
+                SPUtil.getInstance().putString(FingerprintData.LOCAL_FINGERPRINT_INFO, FingerprintUtil.getFingerprintInfoString(SPUtil.getInstance().mContext));
+
             } catch (BadPaddingException | IllegalBlockSizeException e) {
                 e.printStackTrace();
                 authenticationCallback.onAuthenticationFailed();
